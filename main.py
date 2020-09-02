@@ -14,7 +14,7 @@ import tkinter.simpledialog
 import sqlite3
 
 root = Tk()
-root.geometry("800x600")
+root.geometry("1100x600")
 root.title("Store managment system")
 myFont = font.Font(family='Helvetica')
 #root.configure(bg = 'blue')
@@ -65,6 +65,9 @@ def goMenu(frame):
 
 def menu():
     def getData():
+
+        def showModels():
+            detailed()
         
         def showGraph():
 
@@ -142,18 +145,23 @@ def menu():
         to_date = datetime.datetime(int(today[0]), int(today[1]), int(today[2]))
         to_date = to_date.strftime("%m/%d/%y")
 
-        def sqlDaily(date):
+        def sqlDaily(date = ""):
             if date.find('/'):
                 date = date.split('/')
-            else:
+            elif date.find(','):
                 date = date.split('.')
                 date[0], date[1] = date[1], date[0]
+
             conn = sqlite3.connect('store.db')
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
-            c.execute('SELECT model, price, currency, to_amd, type, size, quantity, color, info  FROM Purchase WHERE( year = ? AND month = ? AND day = ?) LIMIT 100',
-             (int(date[2]), int(date[0]), int(date[1]))
-             )
+            if len(date) != 1:
+                c.execute('SELECT model, price, currency, to_amd, type, size, quantity, color, info  FROM Purchase WHERE( year = ? AND month = ? AND day = ?) LIMIT 100',
+                (int(date[2]), int(date[0]), int(date[1]))
+                )
+            else:
+                c.execute('SELECT model, price, currency, to_amd, type, size, quantity, color, info  FROM Purchase')
+
             data = [dict(row) for row in c.fetchall()]
 
             same = []
@@ -198,10 +206,14 @@ def menu():
 
             for i in same:
                 del data[i]
-            
-            c.execute('SELECT model, price, currency, to_amd, type, size, quantity, color, info  FROM Sell WHERE( year = ? AND month = ? AND day = ?) LIMIT 100',
-             (int(date[2]), int(date[0]), int(date[1]))
-             )
+
+            if len(date) != 1:
+                c.execute('SELECT model, price, currency, to_amd, type, size, quantity, color, info  FROM Sell WHERE( year = ? AND month = ? AND day = ?) LIMIT 100',
+                (int(date[2]), int(date[0]), int(date[1]))
+                )
+            else:
+                c.execute('SELECT model, price, currency, to_amd, type, size, quantity, color, info  FROM Sell')
+
             data_sell = [dict(row) for row in c.fetchall()]
 
             same_sell = []
@@ -252,15 +264,9 @@ def menu():
 
             for i in range(len(data_sell)):
                 sModel[data_sell[i]['model']] = []
-            for i in range(len(data)):
-                if data[i]['model'] not in sModel.keys():
-                    sModel[data[i]['model']] = []
 
             for i in range(len(data)):
                 pModel[data[i]['model']] = []
-            for i in range(len(data_sell)):
-                if data_sell[i]['model'] not in pModel.keys():
-                    pModel[data_sell[i]['model']] = []
 
             for i in range(len(data)):
                 c.execute('SELECT SUM(quantity) FROM Purchase WHERE model = ? AND size = ? AND color = ?',
@@ -527,8 +533,11 @@ def menu():
             total_rows = len(dataP[0])
             total_cols = len(dataP[0][0])
             
+            models = Button(frameGet, text = 'Models', command = showModels)
+            models.grid(row = 0, column = 5)
+            models['font'] = myFont
             graph = Button(frameGet, text = 'Graph', command = showGraph)
-            graph.grid(row = 0, column = 5)
+            graph.grid(row = 0, column = 6)
             graph['font'] = myFont
 
             for j in range(total_cols):
@@ -617,7 +626,7 @@ def menu():
         profit_label.config(font=("Arial", 12))
         
 
-        def detailed(date):
+        def detailed(date = ""):
             detailed_window = Toplevel(root)
             detailed_window.geometry("1280x720")
             ### 
@@ -694,6 +703,7 @@ def menu():
                         e = Entry(frameK)
                         e.grid(row = i + 3, column = j + 2)
                         e.insert(0, dataP[0][i][j][1])
+
             for i in range(len(dataP[1])):
                 e = Entry(frameK)
                 e.grid(row = len(dataP[0]) + i + 4, column = 3)
