@@ -268,7 +268,7 @@ def menu():
             for i in range(len(data)):
                 pModel[data[i]['model']] = []
 
-            for i in rashnge(len(data)):
+            for i in range(len(data)):
                 c.execute('SELECT SUM(quantity) FROM Purchase WHERE model = ? AND size = ? AND color = ?',
                  (data[i]['model'], data[i]['size'], data[i]['color'])
                  )
