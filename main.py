@@ -268,7 +268,7 @@ def menu():
             for i in range(len(data)):
                 pModel[data[i]['model']] = []
 
-            for i in range(len(data)):
+            for i in rashnge(len(data)):
                 c.execute('SELECT SUM(quantity) FROM Purchase WHERE model = ? AND size = ? AND color = ?',
                  (data[i]['model'], data[i]['size'], data[i]['color'])
                  )
@@ -447,7 +447,7 @@ def menu():
                     from_date = d.get()
                     currentFrom[0] = from_date
                     dataP = sql(currentFrom[0], currentTo[0])
-                    show(dataP, currentFrom[0], currentTo[0])
+                    (dataP, currentFrom[0], currentTo[0])
                 else:
                     for widget in frameE.winfo_children():
                         widget.destroy()
