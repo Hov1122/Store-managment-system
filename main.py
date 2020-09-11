@@ -800,8 +800,10 @@ def menu():
                 wh_s = 'Purchase'
             else:
                 wh_s = 'Sell'
-            data = normalizeInput(quantity_entry.get(), color_entry.get(), size_entry.get())
-
+            data = normalizeInput(quantity_entry.get(), color_entry.get(), size_entry.get(), model_entry.get(), price_entry.get())
+            if len(to_amd) != len(data[0]):
+                for i in range(len(data[0]) - len(to_amd)):
+                    to_amd.append(to_amd[0])
             if date[0] and date[1] and date[2]:
                 response = messagebox.askquestion("Add ?", "Confirm")
                 if response == 'yes':
@@ -815,13 +817,13 @@ def menu():
                                     'year' : int(date[2]),
                                     'month' :   int(date[0]),
                                     'day' : int(date[1]),
-                                    'model' :model_entry.get(),
-                                    'price' : price_entry.get(),
+                                    'model' : data[3][i],
+                                    'price' : float(data[4][i]),
                                     'currency' : curr,
-                                    'to_amd': to_amd,
+                                    'to_amd': to_amd[i],
                                     'type' :  type_entry.get(),
                                     'size' : data[2][i],
-                                    'quantity' :data[0][i],
+                                    'quantity' : data[0][i],
                                     'color' : data[1][i],
                                     'info' :  add_entry.get(),  
 
@@ -834,10 +836,10 @@ def menu():
                                     'year' : int(date[2]),
                                     'month' :   int(date[0]),
                                     'day' : int(date[1]),
-                                    'model' :model_entry.get(),
-                                    'price' : price_entry.get(),
+                                    'model' : data[3][i],
+                                    'price' : float(data[4][i]),
                                     'currency' : curr,
-                                    'to_amd': to_amd,
+                                    'to_amd': to_amd[i],
                                     'type' :  type_entry.get(),
                                     'size' : data[2][i],
                                     'quantity' :data[0][i],
@@ -992,16 +994,20 @@ def menu():
         Radiobutton(frameAdd, text = 'Purchase', command=getL, variable = sop, value = 1).grid(row = 9, column = 0)
         Radiobutton(frameAdd, text = 'Sell', command=getL, variable = sop, value = 2).grid(row = 9, column = 1)
         def toAmd(amount):
-            currency = getCurrency()
-            if currency != "AMD":
-                try:
-                    url = str.__add__('http://data.fixer.io/api/latest?access_key=', '2b8863535c463f1a9762ef78532d54e9')   
-                    curs = Currency_convertor(url) 
-                    to_amd = curs.convert(getCurrency(), "AMD", int(amount)) 
-                except:
-                    to_amd = amount
-            else:
-                to_amd = amount
+            to_amd = []
+            amount = amount.split()
+            for i in amount:
+                currency = getCurrency()
+                if currency != "AMD":
+                    try:
+                        url = str.__add__('http://data.fixer.io/api/latest?access_key=', '2b8863535c463f1a9762ef78532d54e9')   
+                        curs = Currency_convertor(url) 
+                        to_amd.append(curs.convert(getCurrency(), "AMD", float(i)))
+                    except:
+                        to_amd.append(float(i))
+                else:
+                    to_amd.append(float(i))
+                    #to_amd = amount
             return to_amd
             
         submit_btn = Button(frameAdd, text = "Add to database", command = lambda: submit(sop.get(), getCurrency(), getDate(dv.get()), toAmd(p.get())), state = DISABLED)
@@ -1065,119 +1071,89 @@ def menu():
                     except:
                         pass
         
-        def normalizeInput(q, c, s):
-            q_many = q.split()
-            s_many = s.split()
+        def normalizeInput(q, c, s, m, p):
+            q = q.split()
+            s = s.split()
+            p = p.split()
             if c.find(',') == -1:
-                c_many = c.split()
+                c = c.split()
             else:
-                c_many = c.split(',')
-                for i in range(len(c_many)):
-                    c_many[i] = c_many[i].lstrip()
-            if (len(q_many) == 0) or len(q_many) > 1 and ((len(c_many) == 0 and len(s_many) == 1) or (len(s_many) == 0 and len(c_many) == 1) or (len(s_many) == 0 and len(c_many) == 0)):
-                return 'error'
-            for ch in range(len(q_many)):
-                if q_many[ch] == '':
-                    q_many.pop(ch)
-            for ch in range(len(c_many)):
-                if c_many[ch] == '':
-                    c_many.pop(ch)
-            for ch in range(len(s_many)):
-                if s_many[ch] == '':
-                    s_many.pop(ch)
-           
-            if len(c_many) == len(q_many) and len(s) == 0:
-                for i in range(len(c_many) - len(s_many)):
-                    s_many.append("")
-                return (q_many, c_many, s_many)
-            elif len(s_many) == len(q_many) and len(c) == 0:
-                for i in range(len(s_many) - len(c_many)):
-                    c_many.append("")
-                return (q_many, c_many, s_many)
-            elif len(c_many) == len(q_many) and len(s_many) == 1:
-                for i in range(len(c_many) - len(s_many)):
-                    s_many.append(s_many[0])
-                return (q_many, c_many, s_many)
-            elif len(c) == len(s) and len(c) == 0 and len(q_many) == 1:
-                s_many.append("")
-                c_many.append("")
-                return (q_many, c_many, s_many)
-            elif len(s_many) == len(q_many) and len(c_many) == 1:
-                for i in range(len(s_many) - len(c_many)):
-                    c_many.append(c_many[0])
-                return (q_many, c_many, s_many)
-            elif len(s_many) == len(c_many) and len(q_many) == 1:
-                for i in range(len(s_many) - len(q_many)):
-                    q_many.append(q_many[0])
-                return (q_many, c_many, s_many)
-            elif len(s_many) != len(q_many) and len(s_many) != len(c_many):
-                if len(c_many) > 1 and len(s) > 1: 
-                    return 'error'
+                c = c.split(',')
+                if c[len(c) - 1] == "":
+                    c.pop(len(c) - 1)
+                for i in range(len(c)):
+                    c[i] = c[i].strip()
+            if m.find(',') == -1:
+                m = m.split()
+            else:
+                m = m.split(',')
+                if m[len(m) - 1] == "":
+                    m.pop(len(m) - 1)
+                for i in range(len(m)):
+                    m[i] = m[i].strip()
 
-            if (len(s) != 0 or len(c) != 0) and (len(q_many) != len(c_many) or len(q_many) != len(s_many)):
-                if (len(q_many) == 1):
-                    if len(s_many) == 1:
-                        for i in range(len(c_many) - len(q_many)):
-                            q_many.append(q_many[0])
-                            s_many.append(s_many[0])
-                        return (q_many, c_many, s_many)
-                    elif len(s_many) == 0:
-                        for i in range(len(c_many) - len(s_many)):
-                            q_many.append(q_many[0])
-                            s_many.append("")
-                        q_many.pop(len(q_many) - 1)
-                        return (q_many, c_many, s_many)
-                    elif len(c_many) == 1:
-                        for i in range(len(s_many) - len(q_many)):
-                            q_many.append(q_many[0])
-                            c_many.append(c_many[0])
-                        return (q_many, c_many, s_many)
-                    elif len(c_many) == 0:
-                        for i in range(len(s_many) - len(c_many)):
-                            q_many.append(q_many[0])
-                            c_many.append("")
-                        q_many.pop(len(q_many) - 1)
-                        return (q_many, c_many, s_many)
-                    else:
-                        return 'error'
-                elif len(c_many) == 1:
-                    
-                    if len(s_many) == 1 and len(q) == 1: 
-                        return (q_many, c_many, s_many)
-                    elif len(s_many) == 0: 
-                        for i in range(len(q_many) - len(s_many)):
-                            c_many.append(c_many[0])
-                            s_many.append("")
-                        c_many.pop(len(c_many) - 1)
-                        return (q_many, c_many, s_many)
-                    if len(q_many) == 1: 
-                        for i in range(len(s_many) - len(c_many)):
-                            q_many.append(q_many[0])
-                            c_many.append(c_many[0])
-                        return (q_many, c_many, s_many)
-                    elif len(q_many) == 0:
-                        return 'error'
-                    else:
-                        return 'error'
-                elif (len(s_many) == 1):
-                    if len(q_many) == 1:
-                        for i in range(len(c_many) - len(q_many)):
-                            q_many.append(q_many[0])
-                            s_many.append(s_many[0])
-                        return (q_many, c_many, s_many)
-                    elif len(q_many) == 0:
-                        return 'error'
-                    elif len(c_many) == 0:
-                        for i in range(len(q_many) - len(c_many)):
-                            s_many.append(s_many[0])
-                            c_many.append("")
-                        s_many.pop(len(s_many) - 1)
-                        return (q_many, c_many, s_many)
-                    else:
-                        return 'error'
-                else:
-                    return 'error' 
-            return (q_many, c_many, s_many)
+            if len(q) == len(p) == len(c) == len(s) == len(m) and len(q) != 0:
+                return (q, c, s, m, p)
+
+            if 0 in [len(q), len(p), len(m)]:
+                return "error"
+
+            if (len(c) > len(q) or len(s) > len(q)) and len(q) != 1:
+                return 'error'
+            elif (len(c) > len(q) or len(s) > len(q)) and len(q) == 1:
+                if len(c) == 0:
+                    c.append("")
+                if len(s) == 0:
+                    s.append("")
+                for i in range(max(len(c), len(s)) - len(q)):
+                    if len(q) < max(len(c), len(s)):
+                        q.append(q[0])
+                    if min(len(c), len(s)) < max(len(c), len(s)):
+                        if len(s) == min(len(c), len(s)):
+                            s.append(s[0])
+                        else:
+                            c.append(c[0])
+            else:
+                if len(c) == 0:
+                    c.append("")
+                if len(s) == 0:
+                    s.append("")
+
+                if len(c) == len(s) and len(c) == 1:
+                    for i in range(len(q) - min(len(c), len(s))):
+                        if len(c) < len(q):
+                            c.append(c[0])
+                        if len(s) < len(q):
+                            s.append(s[0])
+
+            if len(q) > 1 and len(p) + len(m) == 2 and max(len(c), len(s)) <= 1:
+                return 'error'
+
+            if len(q) == len(m) and len(m) == len(p):
+                return (q, c, s, m, p)
+            elif 1 not in [len(q), len(m), len(p)]:
+                return 'error'
+            elif len(q) != 1 and ((len(c) > 1 and len(q) != len(c)) or (len(s) > 1 and len(s) != len(q))):
+                return 'error'
+            elif sum(1 for i in [len(q), len(p), len(m)] if i == 1) == 2 or (len(q) == 1 and len(p) == len(m)) or (len(p) == 1 and len(q) == len(m)) or (len(m) == 1 and len(p) == len(q)):
+                for i in range(max(len(q), len(m), len(p)) - min(len(q), len(m), len(p))):
+                    if len(q) < max(len(q), len(m), len(p)):
+                        q.append(q[0])
+                    if len(m) < max(len(q), len(m), len(p)):
+                        m.append(m[0])
+                    if len(p) < max(len(q), len(m), len(p)):
+                        p.append(p[0])
+                    if len(c) < max(len(q), len(m), len(p)):
+                        c.append(c[0])
+                    if len(s) < max(len(q), len(m), len(p)):
+                        s.append(s[0])
+
+            if min([len(q), len(c), len(s), len(m), len(p)]) != max([len(q), len(c), len(s), len(m), len(p)]):
+
+                return 'error'
+            
+            return (q, c, s, m, p)
+
         
 
         def submit_ver(p, q, d, m, c, s):
@@ -1190,8 +1166,12 @@ def menu():
                     a = d.get().split('.')
                     a[0], a[1] = a[1], a[0]
                 checkDate = datetime.datetime(int(a[2]) + 2000,int(a[0]),int(a[1]))
-                float(p.get())
-                check = normalizeInput(q.get(), c.get(), s.get())
+                
+                check = normalizeInput(q.get(), c.get(), s.get(), m.get(), p.get())
+                
+                if check == 'error':
+                    submit_btn['state'] = 'disabled'
+
                 flag = True
                 for qc in check[0]:
                     if not qc.isdigit():
