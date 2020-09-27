@@ -1,5 +1,6 @@
 
 from tkinter import *
+import numpy as np
 from tkcalendar import *
 from tkinter import messagebox
 import tkinter.font as font
@@ -11,10 +12,11 @@ import urllib.request
 import matplotlib.pyplot as plt
 import tkcalendar
 import tkinter.simpledialog
+
 import sqlite3
 
 root = Tk()
-root.geometry("1100x600")
+root.geometry("1100x600+50+50")
 root.title("Store managment system")
 myFont = font.Font(family='Helvetica')
 #root.configure(bg = 'blue')
@@ -36,7 +38,7 @@ class Currency_convertor:
     # function to do a simple cross multiplication between  
     # the amount and the conversion rates 
     def convert(self, from_currency, to_currency, amount): 
-        initial_amount = amount 
+        
         if from_currency != 'EUR' : 
             amount = amount / self.rates[from_currency] 
   
@@ -49,7 +51,7 @@ class Currency_convertor:
 
 def connect():
     try:
-        urllib.request.urlopen('http://google.com') #Python 3.x
+        urllib.request.urlopen('http://google.com', timeout=1) #Python 3.x
         return True
     except:
         return False
@@ -73,27 +75,38 @@ def menu():
 
             conn = sqlite3.connect('store.db')
             c = conn.cursor()
-            data = []
+            data_q = []
+            data_p = []
             now = datetime.date.today()
             for i in range(1, 13):
-                c.execute("SELECT sum(quantity) FROM Sell WHERE year = ? and  month = ?", (int(now.year) - 2000, i))
+                c.execute("SELECT sum(quantity), sum(overall) FROM Sell WHERE year = ? and  month = ?", (int(now.year) - 2000, i))
                 data_monthly = c.fetchall()
-                if data_monthly[0][0] is None:
-                    data.append(0)
+                data_monthly = data_monthly[0]
+                if data_monthly[0] is None:
+                    data_q.append(0)
+                    data_p.append(0)
                 else:
-                    data.append(data_monthly[0][0])
-
+                    data_q.append(data_monthly[0])
+                    data_p.append(data_monthly[1])
+           
             
             names = ['Jan', 'Feb', 'Mart', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dect']
-            values = data
+            values = data_q
+            values2 = data_p
             plt.figure(figsize=(12, 12))
-
-            plt.subplot()
+            
+            plt.subplot(2, 1, 1)
             plt.bar(names, values, color = 'peru', edgecolor = 'blue')
             plt.xlabel("Month")
             plt.ylabel("Sold")
             plt.suptitle('Sale')
+            plt.subplot(2, 1, 2)
+            plt.bar(names, values2, color = 'peru', edgecolor = 'blue')
+            plt.xlabel("Month")
+            plt.ylabel("Sold")
+            plt.suptitle('Sale')
             plt.show()
+
 
 
         def showDatePicker(frame, wh):
@@ -103,8 +116,10 @@ def menu():
             d2 = d2.split('/')
             cal = Calendar(dateF, selectmode = 'day', year = int(d2[2]), month = int(d2[0]), day = int(d2[1]))
             cal.pack()
-            choose = Button(dateF, text = 'Choose', command = lambda : grabDate(cal.get_date(), dateF, wh)).pack()
-            cansel = Button(dateF, text = 'Cansel', command = lambda: dateF.destroy()).pack()
+            choose = Button(dateF, text = 'Choose', command = lambda : grabDate(cal.get_date(), dateF, wh))
+            choose.pack()
+            cansel = Button(dateF, text = 'Cansel', command = lambda: dateF.destroy())
+            cansel.pack()
         def grabDate(date, window, wh):
             window.destroy()
 
@@ -811,8 +826,8 @@ def menu():
                     c = conn.cursor()
                     for i in range(len(data[0])):
                         if wh_s == 'Purchase':
-                            c.execute("INSERT INTO Purchase (year, month, day, model, price, currency, to_amd, type, size, quantity, color, info) "
-                                    " VALUES(:year, :month, :day, :model, :price, :currency, :to_amd, :type, :size, :quantity, :color, :info)", 
+                            c.execute("INSERT INTO Purchase (year, month, day, model, price, currency, to_amd, type, size, quantity, color, info, overall) "
+                                    " VALUES(:year, :month, :day, :model, :price, :currency, :to_amd, :type, :size, :quantity, :color, :info, :overall)", 
                                 {
                                     'year' : int(date[2]),
                                     'month' :   int(date[0]),
@@ -826,12 +841,13 @@ def menu():
                                     'quantity' : data[0][i],
                                     'color' : data[1][i],
                                     'info' :  add_entry.get(),  
+                                    'overall' : int(data[0][i]) * float(data[4][i]),
 
                                 }
                             )
                         else:
-                            c.execute("INSERT INTO Sell (year, month, day, model, price, currency, to_amd, type, size, quantity, color, info) "
-                                    " VALUES(:year, :month, :day, :model, :price, :currency, :to_amd, :type, :size, :quantity, :color, :info)", 
+                            c.execute("INSERT INTO Sell (year, month, day, model, price, currency, to_amd, type, size, quantity, color, info, overall) "
+                                    " VALUES(:year, :month, :day, :model, :price, :currency, :to_amd, :type, :size, :quantity, :color, :info, :overall)", 
                                 {
                                     'year' : int(date[2]),
                                     'month' :   int(date[0]),
@@ -845,6 +861,7 @@ def menu():
                                     'quantity' :data[0][i],
                                     'color' : data[1][i],
                                     'info' :  add_entry.get(),
+                                    'overall' : int(data[0][i]) * float(data[4][i]),
 
                                 }
                             )
